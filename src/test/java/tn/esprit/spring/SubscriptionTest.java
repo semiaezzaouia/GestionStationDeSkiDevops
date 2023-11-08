@@ -1,55 +1,63 @@
 package tn.esprit.spring;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.springframework.boot.test.context.SpringBootTest;
 import tn.esprit.spring.entities.Subscription;
 import tn.esprit.spring.entities.TypeSubscription;
+import tn.esprit.spring.repositories.ISkierRepository;
 import tn.esprit.spring.repositories.ISubscriptionRepository;
-import tn.esprit.spring.services.ISubscriptionServices;
+import tn.esprit.spring.services.SubscriptionServicesImpl;
+
 import java.time.LocalDate;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.*;
 
-@SpringBootTest
 public class SubscriptionTest {
-
-    @InjectMocks
-    private ISubscriptionServices subscriptionServices;
 
     @Mock
     private ISubscriptionRepository subscriptionRepository;
 
+    @Mock
+    private ISkierRepository skierRepository;
+
+    private SubscriptionServicesImpl subscriptionServices;
+
     @BeforeEach
     public void setUp() {
-        MockitoAnnotations.openMocks(this); // Initialize annotated mocks
+        MockitoAnnotations.initMocks(this);
+        subscriptionServices = new SubscriptionServicesImpl(subscriptionRepository, skierRepository);
     }
 
     @Test
     public void testAddSubscription() {
-        // Create a mock Subscription object
-        Subscription mockSubscription = new Subscription();
-        mockSubscription.setNumSub(1L);
-        mockSubscription.setStartDate(LocalDate.now());
-        mockSubscription.setEndDate(LocalDate.now().plusMonths(1));
-        mockSubscription.setPrice(100.0F);
-        mockSubscription.setTypeSub(TypeSubscription.MONTHLY);
+        Subscription subscription = new Subscription();
+        subscription.setTypeSub(TypeSubscription.ANNUAL);
+        subscription.setStartDate(LocalDate.now());
 
-        // Mock the behavior of the repository
-        Mockito.when(subscriptionRepository.save(Mockito.any(Subscription.class)))
-                .thenReturn(mockSubscription);
+        when(subscriptionRepository.save(any(Subscription.class))).thenReturn(subscription);
 
-        // Call the service method
-        Subscription addedSubscription = subscriptionServices.addSubscription(mockSubscription);
+        Subscription savedSubscription = subscriptionServices.addSubscription(subscription);
 
-        // Verify the result
-        assertEquals(1L, addedSubscription.getNumSub());
-        assertEquals(mockSubscription.getStartDate(), addedSubscription.getStartDate());
-        assertEquals(mockSubscription.getEndDate(), addedSubscription.getEndDate());
-        assertEquals(mockSubscription.getPrice(), addedSubscription.getPrice());
-        assertEquals(mockSubscription.getTypeSub(), addedSubscription.getTypeSub());
+        assertEquals(subscription, savedSubscription);
+        verify(subscriptionRepository, times(1)).save(subscription);
+    }
+
+    @Test
+    public void testGetSubscriptionByType() {
+        TypeSubscription type = TypeSubscription.MONTHLY;
+        List<Subscription> subscriptions = new ArrayList<>();
+        subscriptions.add(new Subscription());
+        subscriptions.add(new Subscription());
+
+        when(subscriptionRepository.findByTypeSubOrderByStartDateAsc(type)).thenReturn(new HashSet<>(subscriptions));
+
+        Set<Subscription> result = subscriptionServices.getSubscriptionByType(type);
+
+        assertEquals(subscriptions.size(), result.size());
+        verify(subscriptionRepository, times(1)).findByTypeSubOrderByStartDateAsc(type);
     }
 }
