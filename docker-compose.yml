@@ -11,6 +11,6 @@ services:
   gestion-station-ski:
     image: hamzamemmi/gestion-station-ski:1.0
     ports:
-      - "8083:8083"
+      - "8089:8089"
     depends_on:
       - mysql
