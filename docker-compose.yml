@@ -7,7 +7,7 @@ services:
       MYSQL_DATABASE: devops
     ports:
       - "3306:3306"
-
+      -
   gestion-station-ski:
     image: hamzamemmi/gestion-station-ski:1.0
     ports:
