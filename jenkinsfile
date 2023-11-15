@@ -1,0 +1,144 @@
+pipeline {
+   agent any
+    tools{
+        maven 'M2_HOME'
+    }
+    
+    environment {
+        NEXUS_VERSION = "nexus3"
+        NEXUS_PROTOCOL = "http"
+        NEXUS_URL = "http://172.20.10.10:8081"
+        NEXUS_REPO = "devops"
+         
+    }
+    
+  stages {
+ 
+          stage('CHECKOUT GIT') {
+
+          steps{
+            echo 'Pulling...';
+            git branch: 'MeryemDaghrour',
+            url: 'https://github.com/semiaezzaouia/GestionStationDeSkiDevops.git'
+            
+              }
+          }
+          
+          stage("build project") {
+            steps {
+                script {
+                    sh "mvn package -DskipTests=true"
+            
+                }
+            }
+        }
+       
+        stage("sonarqube") {
+        steps {
+            
+         sh "mvn sonar:sonar -Dsonar.host.url=http://172.20.10.10:9000/ -Dsonar.login=squ_1c4a17d02708f6dcfb2221d8fbed00e26579bc70"
+                
+         } 
+        }
+        
+       
+        
+      stage("Test unitaire avec Mockito") {
+            steps {
+                script {
+                    sh "mvn test"
+                }
+            }
+        }
+    
+    stage("nexus") {
+            steps {
+                script {
+                   
+                    sh "mvn deploy -DskipTests=true"
+                }
+            }
+        }
+        stage("repoupload") {
+           
+           
+            steps {
+               
+                script {
+                   
+                    pom = readMavenPom file: "pom.xml";
+                    filesByGlob = findFiles(glob: "target/*.${pom.packaging}");
+                    echo "${filesByGlob[0].name} ${filesByGlob[0].path} ${filesByGlob[0].directory} ${filesByGlob[0].length} ${filesByGlob[0].lastModified}"
+                    artifactPath = filesByGlob[0].path;
+                    artifactExists = fileExists artifactPath;
+
+                    if(artifactExists) {
+                        echo "* File: ${artifactPath}, group: ${pom.groupId}, packaging: ${pom.packaging}, version ${pom.version}";
+ 
+                   
+                        nexusArtifactUploader(
+                            nexusVersion: NEXUS_VERSION,
+                            protocol: NEXUS_PROTOCOL,
+                            nexusUrl: NEXUS_URL,
+                            groupId: pom.groupId,
+                            version: pom.version,
+                            repository: NEXUS_REPO,
+                            credentialsId:'nexus-cred' ,
+                            artifacts: [
+                                [artifactId: pom.artifactId,
+                                classifier: '',
+                                file: artifactPath,
+                                type: pom.packaging],
+                                [artifactId: pom.artifactId,
+                                classifier: '',
+                                file: "pom.xml",
+                                type: "pom"]
+                            ]
+                          
+                        );
+                 
+                    }
+                    else {
+                        error "* File: ${artifactPath}, could not be found";
+                    }
+                    }
+                  }
+                   
+                }
+        
+        stage('docker create image'){
+            steps{
+                sh 'docker build -t gestion-station-ski .'
+            }
+              
+          }
+          
+          stage('docker push'){
+            steps{
+                script{
+                            sh 'docker login -u meryemdaghrour -p Meryem123'
+                        
+                        sh 'docker tag gestion-station-ski meryemdaghrour/gestion-station-ski'
+                        sh 'docker push meryemdaghrour/gestion-station-ski'
+                }
+              
+            }
+            }
+            
+            
+            stage('docker compose'){
+            steps{
+               script {
+                            sh 'docker compose up -d'
+                
+               } 
+            }
+              
+          }
+          
+        
+          
+         
+      
+  }
+}
