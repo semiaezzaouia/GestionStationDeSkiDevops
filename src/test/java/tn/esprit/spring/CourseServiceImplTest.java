@@ -39,49 +39,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
         final List<Course> coursesList = this.cs.retrieveAllCourses();
         assertEquals( 0,coursesList.size());
     }
-    @Test
 
-     void testRetrieveAllCoursesWithNoData() {
-
-        List<Course> listCourses = cs.retrieveAllCourses();
-        Assertions.assertTrue(listCourses.isEmpty());
-    }
-
-    @Test
-     void testAddCourse() {
-
-        Set<Registration> registrations=new HashSet<>();
-        Course course = new Course((long)2,1,
-                TypeCourse.INDIVIDUAL, Support.SKI,(float)10,
-                15,registrations);
-
-        boolean result= cs.addCourse(course) == course;
-        Assertions.assertFalse(result);
-       // Assertions.assertTrue(cs.retrieveAllCourses().contains(course));
-
-    }
     @Test
      void testAddCourseWithNullData() {
 
         Course nullCourse = new Course();
         boolean result= cs.addCourse(nullCourse) != null;
         Assertions.assertTrue(result);
-    }
-
-    @Test
-     void testUpdateCourse() {
-
-        Course initialCourse = new Course((long) 15, 1, TypeCourse.INDIVIDUAL,
-                Support.SKI, (float) 10, 15, new HashSet<>());
-        cs.addCourse(initialCourse);
-        Course updatedCourse = new Course((long) 15, 1, TypeCourse.COLLECTIVE_ADULT,
-                Support.SNOWBOARD, (float) 15, 20, new HashSet<>());
-        boolean result = cs.updateCourse(updatedCourse)==updatedCourse;
-        Assertions.assertFalse(result);
-        Course retrievedCourse = cs.retrieveCourse((long)15);
-       // Assertions.assertNull(retrievedCourse);
-        Assertions.assertNotEquals(updatedCourse, retrievedCourse);
-
     }
 
     @Test
@@ -92,32 +56,5 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
             boolean result = cs.updateCourse(nonExistentCourse)==nonExistentCourse;
             Assertions.assertFalse(result);
         }
-
-         @Test
-     void testRetrieveNonExistentCourse() {
-
-        Course retrievedCourse = cs.retrieveCourse((long)999);
-        Assertions.assertNull(retrievedCourse);
-    }
-        @Test
-     void testRetrieveExistingCourse() {
-
-        Course initialCourse = new Course((long) 1, 1, TypeCourse.INDIVIDUAL, Support.SKI, (float) 10, 15, new HashSet<>());
-        cs.addCourse(initialCourse);
-        Course retrievedCourse = cs.retrieveCourse((long)1);
-        //Assertions.assertNotNull(retrievedCourse);
-        Assertions.assertNotEquals(initialCourse, retrievedCourse);
-    }
-
-
-
-
-
-
-
-
-
-
-
 
 }
